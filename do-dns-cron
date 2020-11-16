@@ -1,0 +1,7 @@
+# For testing - run every minute
+#* * * * * /do-dns.sh 2>&1
+
+# Run the DNS update(s) at midnight every day
+0 0 * * * /do-dns.sh 2>&1
+
+# We need a blank line here for it to be a valid cron file
