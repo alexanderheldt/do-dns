@@ -75,27 +75,29 @@ updateDomainRecord() {
 external_ip=$(getExternalIP)
 [ $? -eq 1 ] && echo 'Could not get external IP' && exit 1
 
+current_timestamp=$(date --rfc-3339=seconds)
+
 IFS=':' read -ra subdomains <<< "$DO_SUBDOMAINS"
 for sd in "${subdomains[@]}"
 do
   r=$(getDomainRecord $DO_TOKEN $DO_DOMAIN $sd)
-  [ $? -eq 1 ] && echo "Failed to get record for $sd.$DO_DOMAIN" && continue
+  [ $? -eq 1 ] && echo "$current_timestamp: Failed to get record for $sd.$DO_DOMAIN" && continue
 
   if [[ $r = null ]]; then
-    echo "No record exist for $sd.$DO_DOMAIN, create one before trying to keep it up to date."
+    echo "$current_timestamp: No record exist for $sd.$DO_DOMAIN, create one before trying to keep it up to date."
     continue
   fi
 
   record_ip=$(echo $r | jq -r .data)
 
   if [ $record_ip = $external_ip ]; then
-    echo "Skipping update of $sd.$DO_DOMAIN, ip is the same."
+    echo "$current_timestamp: Skipping update of $sd.$DO_DOMAIN, ip is the same."
     continue
   fi
 
   record_id=$(echo $r | jq .id)
 
   updateDomainRecord $DO_TOKEN $DO_DOMAIN $sd $record_id $external_ip \
-    && echo "Updated record for $sd.$DO_DOMAIN" \
-    || echo "Failed to update record for $sd.$DO_DOMAIN"
+    && echo "$current_timestamp: Updated record for $sd.$DO_DOMAIN" \
+    || echo "$current_timestamp: Failed to update record for $sd.$DO_DOMAIN"
 done
